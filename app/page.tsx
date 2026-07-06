@@ -44,9 +44,10 @@ export default function Home() {
 
         const strengthSets = buildStrengthDataset(results.data)
 
+        // 1. build trends
         const weightTrend = getExerciseTrend(
-          strengthSets, 
-          "Bench Press (Barbell)", 
+          strengthSets,
+          "Bench Press (Barbell)",
           maxWeight
         );
 
@@ -56,21 +57,36 @@ export default function Home() {
           estimated1RM
         );
 
+        // 2. combine trends
         const combinedTrend = weightTrend.map((w) => {
-        const e = e1rmTrend.find((x) => x.month === w.month);
+          const e = e1rmTrend.find((x) => x.month === w.month);
 
-        return {
-          month: w.month,
-          maxWeight: w.value,
-          e1rm: e?.value ?? null,
-          bestE1RMSet: e?.bestSet ?? null,
-        };
-      });
-        setData(combinedTrend);
-        console.log("Combined Trend: ", combinedTrend)
-        
-        const newInsights = getExerciseInsights(combinedTrend)
+          return {
+            month: w.month,
+            maxWeight: w.value,
+            e1rm: e?.value ?? undefined,
+            bestE1RMSet: e?.bestSet ?? null,
+          };
+        });
+
+        // 3. compute insights (MUST come before usage)
+        const newInsights = getExerciseInsights(combinedTrend);
+
+        // 4. extract PR months
+        const maxWeightPRMonth = newInsights?.maxWeightPR?.month;
+        const e1rmPRMonth = newInsights?.e1rmPR?.month;
+
+        // 5. add flags to chart data
+        const finalTrend = combinedTrend.map((w) => ({
+          ...w,
+          isMaxWeightPR: w.month === maxWeightPRMonth,
+          isE1RMPR: w.month === e1rmPRMonth,
+        }));
+
+        // 6. update state
+        setData(finalTrend);
         setInsights(newInsights);
+
 
       },
     });
@@ -109,6 +125,25 @@ export default function Home() {
     stroke={COLORS.maxWeight}
     strokeWidth={2}
     connectNulls
+    activeDot={{ r: 3 }}
+    dot={(props: any) => {
+  const { cx, cy, payload } = props;
+
+  if (payload.isMaxWeightPR) {
+    return (
+      <circle
+        cx={cx}
+        cy={cy}
+        r={7}
+        fill={COLORS.maxWeight}
+        stroke="#fff"
+        strokeWidth={2}
+      />
+    );
+  }
+
+  return <circle cx={cx} cy={cy} r={2.5} fill={COLORS.maxWeight} opacity={0.5} />;
+}}
   />
 
   <Line
@@ -118,6 +153,27 @@ export default function Home() {
     stroke={COLORS.e1rm}
     strokeWidth={2}
     connectNulls
+    activeDot={{ r: 3 }}
+    dot={(props: any) => {
+  const { cx, cy, payload } = props;
+
+   if (cy == null || isNaN(cy)) return null;
+
+  if (payload.isE1RMPR) {
+    return (
+      <circle
+        cx={cx}
+        cy={cy}
+        r={7}
+        fill={COLORS.e1rm}
+        stroke="#fff"
+        strokeWidth={2}
+      />
+    );
+  }
+
+  return <circle cx={cx} cy={cy} r={2.5} fill={COLORS.e1rm} opacity={0.5} />;
+}}
   />
 </LineChart>
 
