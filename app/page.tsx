@@ -1,65 +1,159 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import Papa from "papaparse";
+import { buildStrengthDataset } from "@/lib/analytics/buildStrengthDataset";
+import { getExerciseTrend } from "@/lib/analytics/getExerciseTrend";
+import { maxWeight } from "@/lib/analytics/metrics/maxWeight";
+import { estimated1RM } from "@/lib/analytics/metrics/estimated1RM";
+import { StrengthTooltip } from "@/components/StrengthTooltip";
+
+import { getExerciseInsights } from "@/lib/analytics/getExerciseInsights";
+
+import { getTimeSince } from "@/lib/utils/getTimeSince";
+
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+
+export const COLORS = {
+  maxWeight: "#8884d8",
+  e1rm: "#82ca9d",
+  bestSet: "#82ca9d",
+};
+
 
 export default function Home() {
+  const [data, setData] = useState<any[]>([])
+  const [insights, setInsights] = useState<any | null>(null);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+
+        const strengthSets = buildStrengthDataset(results.data)
+
+        const weightTrend = getExerciseTrend(
+          strengthSets, 
+          "Bench Press (Barbell)", 
+          maxWeight
+        );
+
+        const e1rmTrend = getExerciseTrend(
+          strengthSets,
+          "Bench Press (Barbell)",
+          estimated1RM
+        );
+
+        const combinedTrend = weightTrend.map((w) => {
+        const e = e1rmTrend.find((x) => x.month === w.month);
+
+        return {
+          month: w.month,
+          maxWeight: w.value,
+          e1rm: e?.value ?? null,
+          bestE1RMSet: e?.bestSet ?? null,
+        };
+      });
+        setData(combinedTrend);
+        console.log("Combined Trend: ", combinedTrend)
+        
+        const newInsights = getExerciseInsights(combinedTrend)
+        setInsights(newInsights);
+
+      },
+    });
+  };
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <main className="p-8 space-y-6">
+      <h1 className="text-3xl font-bold">
+        Strength Dashboard MVP
+      </h1>
+
+      <input
+        type="file"
+        accept=".csv"
+        onChange={handleFileUpload}
+      />
+
+      <div className="mt-6">
+        <p className="font-semibold">Rows loaded:</p>
+        <p>{data.length}</p>
+      </div>
+
+      <div className="mt-8" style={{ width: "100%", height: 300 }}>
+  <ResponsiveContainer>
+    
+    
+    <LineChart data={data}>
+  <CartesianGrid strokeDasharray="3 3" />
+  <XAxis dataKey="month" />
+  <YAxis />
+  <Tooltip content={<StrengthTooltip />} />
+
+  <Line
+    type="monotone"
+    dataKey="maxWeight"
+    name="Heaviest Weight"
+    stroke={COLORS.maxWeight}
+    strokeWidth={2}
+    connectNulls
+  />
+
+  <Line
+    type="monotone"
+    dataKey="e1rm"
+    name="Estimated 1RM"
+    stroke={COLORS.e1rm}
+    strokeWidth={2}
+    connectNulls
+  />
+</LineChart>
+
+
+  </ResponsiveContainer>
+
+  {insights && (
+  <div className="mt-4 space-y-2 text-sm text-gray-700">
+    <div>
+      <p style={{ color: COLORS.maxWeight}}>
+        🏆 Heaviest Weight PR
+      </p>
+      <p>
+        {insights.maxWeightPR.value} kg — {insights.maxWeightPR.month}
+      </p>
+      <p className="text-gray-500">
+        {insights.maxWeightPR.timeSince}
+      </p>
     </div>
+
+    <div>
+      <p style={{ color: COLORS.e1rm}}>
+        📈 Best Estimated 1RM
+      </p>
+      <p>
+        {insights.e1rmPR.value} kg — {insights.e1rmPR.month}
+      </p>
+      <p className="text-gray-500">
+        {insights.e1rmPR.timeSince}
+      </p>
+    </div>
+  </div>
+)}
+
+
+</div>
+    </main>
   );
 }
