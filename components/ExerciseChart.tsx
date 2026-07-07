@@ -27,23 +27,41 @@ export function ExerciseChart({
     <ResponsiveContainer>
     
     
-        <LineChart data={chartData}>
+        <LineChart 
+        data={chartData}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="month" />
-        <YAxis />
+        // Y-axis was short so added spacing + clean top end number
+        <YAxis
+        domain={[
+            0,
+            (dataMax: number) => {
+            const padded = dataMax * 1.08;
+
+            if (padded <= 50) return Math.ceil(padded / 5) * 5;
+            if (padded <= 100) return Math.ceil(padded / 10) * 10;
+            return Math.ceil(padded / 20) * 20;
+            },
+        ]}
+        />
+
         <Tooltip content={<StrengthTooltip />} />
 
-        <Bar
-  dataKey="maxWeight"
-  fill="#8884d8"
-  opacity={0.15}
-/>
 
-<Bar
-  dataKey="e1rm"
-  fill="#fff"
-  opacity={0.15}
-/>
+       <Bar
+        dataKey="frequencyChartValue"
+        fill={COLORS.training}
+        opacity={0.25}
+        stackId="training"
+        />
+       
+        <Bar
+        dataKey="volumeChartValue"
+        fill={COLORS.training}
+        opacity={0.15}
+        stackId="training"
+        />
+        
         <Line
             type="monotone"
             dataKey="maxWeight"

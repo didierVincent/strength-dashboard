@@ -9,21 +9,11 @@ export function StrengthTooltip({ active, payload, label }: any) {
     <div className="rounded-md border bg-white p-3 shadow">
       <p className="font-semibold">{label}</p>
 
-      <p style={{ color: COLORS.maxWeight }}>
-        Heaviest Weight: {point.maxWeight ?? "-"} kg
-      </p>
-
 
       {point.bestMaxWeightSet?.weight != null && (
         <p style={{ color: COLORS.maxWeight }}>
           Heaviest Set: {point.bestMaxWeightSet.weight} kg ×{" "}
           {point.bestMaxWeightSet.reps}
-        </p>
-      )}
-
-      {point.e1rm != null && (
-        <p style={{ color: COLORS.e1rm }}>
-          Estimated 1RM: {point.e1rm} kg
         </p>
       )}
 
@@ -33,6 +23,14 @@ export function StrengthTooltip({ active, payload, label }: any) {
           {point.bestE1RMSet.reps}
         </p>
       )}
+
+      {point.e1rm != null && (
+        <p style={{ color: COLORS.e1rm }}>
+          Estimated 1RM: {point.e1rm} kg
+        </p>
+      )}
+
+      
     </div>
   );
 }
