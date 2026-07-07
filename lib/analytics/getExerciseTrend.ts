@@ -1,3 +1,10 @@
+
+
+
+// reusable function takes 3 inputs, list of sets, exercise to filter 
+// and metric being another function (dependency injection)
+
+
 export function getExerciseTrend(
   sets: any[],
   exercise: string,
@@ -6,10 +13,14 @@ export function getExerciseTrend(
     bestSet?: any;
   } | null
 ) {
+
+  // find exercise: remove everyone except requested
   const filtered = sets.filter((s) =>
     s.exercise?.toLowerCase().includes(exercise.toLowerCase())
   );
 
+  // empty obj, convert to dates from strings
+  
   const grouped: Record<string, any[]> = {};
 
   for (const s of filtered) {

@@ -4,14 +4,24 @@ import { formatTimeSince } from "../utils/formatTimeSince";
 export function getExerciseInsights(trend: any[]) {
   if (!trend.length) return null;
 
-  let bestWeight = { value: 0, month: "" };
-  let bestE1RM = { value: 0, month: "" };
+  let bestWeight = {
+    value: 0,
+    month: "",
+    bestSet: null as any,
+  };
+
+  let bestE1RM = {
+    value: 0,
+    month: "",
+    bestSet: null as any,
+  };
 
   for (const point of trend) {
     if (point.maxWeight > bestWeight.value) {
       bestWeight = {
         value: point.maxWeight,
         month: point.month,
+        bestSet: point.bestMaxWeightSet,
       };
     }
 
@@ -19,6 +29,7 @@ export function getExerciseInsights(trend: any[]) {
       bestE1RM = {
         value: point.e1rm,
         month: point.month,
+        bestSet: point.bestE1RMSet,
       };
     }
   }
@@ -26,17 +37,15 @@ export function getExerciseInsights(trend: any[]) {
   const weightTimeSince = getTimeSince(bestWeight.month);
   const e1rmTimeSince = getTimeSince(bestE1RM.month);
 
-  const weightTimeFormatted = formatTimeSince(weightTimeSince);
-    const e1rmTimeFormatted = formatTimeSince(e1rmTimeSince);
-
   return {
     maxWeightPR: {
       ...bestWeight,
-      timeSince: weightTimeFormatted,
+      timeSince: formatTimeSince(weightTimeSince),
     },
+
     e1rmPR: {
       ...bestE1RM,
-      timeSince: e1rmTimeFormatted,
+      timeSince: formatTimeSince(e1rmTimeSince),
     },
   };
 }

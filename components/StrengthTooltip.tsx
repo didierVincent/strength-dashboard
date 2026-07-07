@@ -1,4 +1,4 @@
-import { COLORS } from "@/app/page";
+import { COLORS } from "@/lib/data/chartColors";
 
 export function StrengthTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
@@ -12,6 +12,14 @@ export function StrengthTooltip({ active, payload, label }: any) {
       <p style={{ color: COLORS.maxWeight }}>
         Heaviest Weight: {point.maxWeight ?? "-"} kg
       </p>
+
+
+      {point.bestMaxWeightSet?.weight != null && (
+        <p style={{ color: COLORS.maxWeight }}>
+          Heaviest Set: {point.bestMaxWeightSet.weight} kg ×{" "}
+          {point.bestMaxWeightSet.reps}
+        </p>
+      )}
 
       {point.e1rm != null && (
         <p style={{ color: COLORS.e1rm }}>
